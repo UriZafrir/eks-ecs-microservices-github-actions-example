@@ -1,0 +1,39 @@
+i need to create with terraform:
+two public subnets with "Enable auto-assign public IPv4 address", ( or two private subnets with nat gateway)
+, eks cluster to use them,
+ iam role for that,
+  node group,
+   iam role for that
+   add access policies
+
+aws eks update-kubeconfig --region eu-central-1 --name commit-cluster
+aws eks --region eu-central-1 update-kubeconfig --name commit-cluster --install
+
+https://www.youtube.com/watch?v=DLmKMBZ_m3w&ab_channel=TechPrimers
+
+eksctl create cluster \
+--name commit-cluster \
+--region eu-central-1 \
+--fargate \
+--instance-types=t2.medium \
+--full-ecr-access \
+--dry-run
+
+
+aws eks update-kubeconfig --region eu-central-1 --name commit-cluster
+
+kubectl get nodes -o wide
+kubectl get pods -A -o wide
+kubectl get pods
+kubectl get svc
+kubectl logs -f openresty-deployment-84d55495bb-qml2r
+eksctl delete cluster --name commit-cluster
+
+
+
+eksctl create cluster -f cluster.yaml --dry-run
+
+
+
+
+https://stackoverflow.com/questions/68775542/aws-eks-node-to-access-rds

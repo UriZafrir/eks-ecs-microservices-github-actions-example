@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commit-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: commit-app
+  template:
+    metadata:
+      labels:
+        app: commit-app
+    spec:
+      containers:
+        - name: python-server
+          image: urizaf/commit-kubernetes-python-server:latest
+          ports:
+            - containerPort: 8000
+            - containerPort: 3306
+        - name: nginx
+          image: urizaf/commit-kubernetes-nginx:latest
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: commit-service
+spec:
+  selector:
+    app: commit-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+    - name: http
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: 3306

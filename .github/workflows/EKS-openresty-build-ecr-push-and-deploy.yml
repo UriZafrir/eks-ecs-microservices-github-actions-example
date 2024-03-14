@@ -1,0 +1,155 @@
+#https://dlmade.medium.com/ci-cd-with-github-action-and-aws-eks-5fd9714010cd
+#https://github.com/Primus-Learning/deploy-to-eks-using-github-actions-new/blob/main/.github/workflows/github-actions-ci.yml
+name: EKS-openresty-build-ecr-push-and-deploy
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '.github/workflows/EKS-openresty-build-ecr-push-and-deploy.yml'
+#       - 'openresty/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@0e613a0980cbf65ed5b322eb7a1e075d28913a83
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+    - name: Build and push Docker images
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: commit-fargate-openresty
+        IMAGE_TAG: latest
+        DOCKERFILE: openresty/Dockerfile
+        BUILD_CONTEXT: openresty
+      run: |
+        # Build and push the image
+        #docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f $DOCKERFILE ./$BUILD_CONTEXT
+        #docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: install kubectl
+      uses: azure/setup-kubectl@v3
+      id: install
+
+    - name: Update kube config
+      run: aws eks update-kubeconfig --region eu-central-1 --name commit-cluster
+
+    - name: Deploy to EKS
+      run: |
+        kubectl apply -f kubernetes-openresty.yaml
+        kubectl get svc
+
+  
+
+
+    # - name: deploy to cluster
+    #   uses: kodermax/kubectl-aws-eks@main
+    #   env:
+    #     KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+    #   with:
+    #     args: apply -f kubernetes-openresty.yaml
+
+
+    # - name: kubectl apply 
+    #   uses: actions-hub/kubectl@master
+    #   env:
+    #     KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+    #   with:
+    #     args: apply -f kubernetes-openresty.yaml
+      
+    # - name: Generate kubeconfig
+    #   run: echo "EKS_CREDS=$(aws eks update-kubeconfig --region eu-central-1 --name commit-cluster --dry-run | base64) >> $GITHUB_ENV
+    # - uses: tale/kubectl-action@v1
+    #   with:
+    #     base64-kube-config: ${{ env.EKS_CREDS }}
+    # - run: kubectl get pods
+
+    # - name: Generate kubeconfig and update kubectl
+    #   run: |
+    #     EKS_CREDS=$(aws eks update-kubeconfig --region eu-central-1 --name commit-cluster --dry-run | base64)
+    #     echo "EKS_CREDS=$EKS_CREDS" >> $GITHUB_ENV
+    #     echo "$EKS_CREDS" > kubeconfig
+    #     echo "KUBECONFIG=$(pwd)/kubeconfig" >> $GITHUB_ENV
+    #     echo echo "${{ env.KUBECONFIG }}"
+        
+    # #https://github.com/marketplace/actions/kubernetes-cli-kubectl
+    # - name: Generate kubeconfig and update kubectl
+    #   run: |  
+    #     #doesnt work -#echo "EKS_CREDS=$(aws eks update-kubeconfig --region eu-central-1 --name commit-cluster --dry-run | base64)" >> $GITHUB_ENV
+    #     #echo "EKS_CREDS=$(aws eks update-kubeconfig --region eu-central-1 --name commit-cluster --dry-run | base64)" >> $GITHUB_ENV
+    #     echo "EKS_CREDS <<EOF" >> $GITHUB_ENV
+    #     aws eks update-kubeconfig --region eu-central-1 --name commit-cluster --dry-run | base64 >> $GITHUB_ENV 
+    #     echo "EOF" >> $GITHUB_ENV
+    #     echo "${{ env.EKS_CREDS }}"
+
+    # - name: kubectl apply
+    #   run: kubectl apply -f kubernetes-openresty.yaml
+    # - uses: tale/kubectl-action@v1
+    #   with:
+    #     base64-kube-config: ${{ env.EKS_CREDS }}
+      
+
+      # - name: Update kubeconfig
+      #   run: aws eks update-kubeconfig --region eu-central-1 --name commit-cluster
+
+      # - name: save kubeconfig as secret
+      #   run: cat $HOME/.kube/config | base64 >> ${{ secrets.KUBE_CONFIG }}
+
+      
+
+      # - name: run kubectl
+      #   uses: tale/kubectl-action@v1
+      #   with:
+      #     base64-kube-config: ${{ secrets.KUBE_CONFIG }}
+      
+
+    #- name: Update kubeconfig
+    #  run: aws eks update-kubeconfig --region eu-central-1 --name commit-cluster
+
+    #- name: Deploy to EKS
+    #  uses: actions-hub/kubectl@master
+    #  with:
+    #    args: --kubeconfig=$HOME/.kube/config apply -f kubernetes-openresty.yaml
+        
+      #env:
+      #  KUBECONFIG: $HOME/.kube/config
+      #health check for the load balancer
+        
+        
+
+#https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-amazon-elastic-container-service
+#https://github.com/marketplace/actions/push-to-amazon-ecr
+#instructions from ecr
+# Make sure that you have the latest version of the AWS CLI and Docker installed. For more information, see Getting Started with Amazon ECR .
+# Use the following steps to authenticate and push an image to your repository. For additional registry authentication methods, including the Amazon ECR credential helper, see Registry Authentication .
+# Retrieve an authentication token and authenticate your Docker client to your registry.
+# Use the AWS CLI:
+
+# aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 463865334882.dkr.ecr.eu-central-1.amazonaws.com
+# Note: If you receive an error using the AWS CLI, make sure that you have the latest version of the AWS CLI and Docker installed.
+# Build your Docker image using the following command. For information on building a Docker file from scratch see the instructions here . You can skip this step if your image is already built:
+
+# docker build -t commit_repo .
+# After the build completes, tag your image so you can push the image to this repository:
+
+# docker tag commit_repo:latest 463865334882.dkr.ecr.eu-central-1.amazonaws.com/commit_repo:latest
+# Run the following command to push this image to your newly created AWS repository:
+
+# docker push 463865334882.dkr.ecr.eu-central-1.amazonaws.com/commit_repo:latest
+

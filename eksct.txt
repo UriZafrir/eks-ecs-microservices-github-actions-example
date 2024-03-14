@@ -1,0 +1,66 @@
+
+eksctl create cluster \
+--name commit-cluster \
+--region eu-central-1 \
+--instance-types=t2.medium \
+--full-ecr-access \
+--nodes-min 1 \
+--nodes-max 1 
+#--dry-run
+
+eksctl create cluster \
+  --name commit-cluster \
+  --region eu-central-1 \
+  --instance-types t2.medium \
+  --full-ecr-access \
+  --nodes-min 1 \
+  --nodes-max 1 \
+  --vpc-id vpc-013a5f430cc61641d \
+  --subnets subnet-0f9d6e3234742f47c,subnet-0cfb6ea70b3a80760,subnet-0fbd442a212d3eb60 \
+  --node-private-networking \
+  --dry-run
+
+
+#add to security group...
+# Get the EKS cluster security group IDs
+#aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | "\(.GroupId) \(.GroupName) "'
+#aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | select(.GroupName | contains("ClusterSharedNodeSecurityGroup")) | .GroupId'
+#aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | select(.GroupName | contains("ClusterSharedNodeSecurityGroup")) | "\(.GroupId) \(.GroupName) "'
+#test command:
+#aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | select(.GroupName | contains("ClusterSharedNodeSecurityGroup")) | .GroupId'
+
+
+eks_security_group_id=$(aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | select(.GroupName | contains("ClusterSharedNodeSecurityGroup")) | .GroupId')
+eks_security_group_name=$(aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | select(.GroupName | contains("ClusterSharedNodeSecurityGroup")) | .GroupName')
+#vpc_id=$(aws ec2 describe-security-groups --region eu-central-1 --group-ids $eks_security_group_id --output json | jq -r '.SecurityGroups[0].VpcId')
+
+# Authorize ingress for RDS security group from EKS cluster security group
+eks_security_group_name=$(aws ec2 describe-security-groups --region eu-central-1 --output json | jq -r '.SecurityGroups[] | select(.GroupName | contains("ClusterSharedNodeSecurityGroup")) | .GroupName')
+
+aws ec2 create-vpc-peering-connection \
+    --vpc-id <requester-vpc-id> \
+    --peer-vpc-id <accepter-vpc-id>
+
+# Authorize ingress for RDS security group from EKS cluster security group
+aws ec2 authorize-security-group-ingress \
+  --region eu-central-1 \
+  --group-id sg-07ce994535f7be639 \
+  --protocol tcp \
+  --port 3306 \
+  --source-security-group-name $eks_security_group_name
+
+#add secret to github so it can do kubectl apply.
+
+
+
+
+aws eks update-kubeconfig --region eu-central-1 --name commit-cluster 
+kubectl get pods
+kubectl apply -f kubernetes-openresty.yaml
+kubectl get pods -w
+kubectl get services
+
+#go to url to test
+
+
+eksctl delete cluster --name commit-cluster

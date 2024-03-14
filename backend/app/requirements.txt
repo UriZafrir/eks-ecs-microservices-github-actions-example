@@ -1,0 +1,4 @@
+pymysql
+cryptography>=3.0
+flask
+gunicorn

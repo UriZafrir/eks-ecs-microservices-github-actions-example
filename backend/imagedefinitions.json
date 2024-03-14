@@ -1,0 +1,6 @@
+[
+    {
+      "name": "commit_fargate_python",
+      "imageUri": "463865334882.dkr.ecr.eu-central-1.amazonaws.com/commit_fargate_python:latest"
+    }
+]

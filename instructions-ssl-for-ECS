@@ -1,0 +1,24 @@
+
+
+1. **Get a SSL/TLS Certificate:**
+   - Obtain a valid SSL/TLS certificate from a Certificate Authority (CA) like Let's Encrypt, AWS Certificate Manager, or another trusted provider.
+
+3. **Upload Certificate to AWS ACM (if using AWS):**
+   - If you are using Amazon ECS and AWS Certificate Manager (ACM), you can upload your certificate to ACM. This involves going to the ACM console, requesting a new certificate, and completing the validation process.
+
+4. **Create or Update ECS Task Definition:**
+   - In your ECS task definition, specify the port where your application is running, and add the necessary container definitions.
+
+5. **Update ECS Service:**
+   - When creating or updating your ECS service, configure it to use the HTTPS protocol and specify the port (usually 443).
+   - If using AWS, you may need to associate the ECS service with a load balancer, like an Application Load Balancer (ALB) or Network Load Balancer (NLB).
+
+6. **Configure Load Balancer (if applicable):**
+   - If you are using a load balancer, configure it to forward traffic to the containers using HTTPS. This includes setting up listeners, target groups, and rules.
+
+7. **Update Security Groups (if applicable):**
+   - Ensure that your security groups allow traffic on the HTTPS port (usually 443).
+
+8. **Deploy and Test:**
+   - Deploy your updated ECS service.
+   - Test the deployment by accessing your service using the HTTPS protocol.

@@ -1,0 +1,249 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    ECSCluster:
+        Type: "AWS::ECS::Cluster"
+        Properties:
+            ClusterName: "ecs-cluster-commit"
+            CapacityProviders: 
+              - "FARGATE"
+              - "FARGATE_SPOT"
+
+    ECRRepository:
+        Type: "AWS::ECR::Repository"
+        Properties:
+            RepositoryName: "commit-fargate-openresty"
+            LifecyclePolicy: 
+                RegistryId: !Ref AWS::AccountId
+
+    RDSDBInstance:
+        Type: "AWS::RDS::DBInstance"
+        Properties:
+            DBInstanceIdentifier: "database-1"
+            AllocatedStorage: 20
+            DBInstanceClass: "db.t2.micro"
+            Engine: "mysql"
+            MasterUsername: "admin"
+            MasterUserPassword: "REPLACEME"
+            PreferredBackupWindow: "20:06-20:36"
+            BackupRetentionPeriod: 0
+            AvailabilityZone: !GetAtt EC2Subnet3.AvailabilityZone
+            PreferredMaintenanceWindow: "tue:02:33-tue:03:03"
+            MultiAZ: false
+            EngineVersion: "8.0.35"
+            AutoMinorVersionUpgrade: true
+            LicenseModel: "general-public-license"
+            PubliclyAccessible: true
+            StorageType: "gp2"
+            Port: 3306
+            StorageEncrypted: false
+            CopyTagsToSnapshot: true
+            MonitoringInterval: 0
+            EnableIAMDatabaseAuthentication: false
+            EnablePerformanceInsights: false
+            DeletionProtection: false
+            DBSubnetGroupName: !Sub "default-${EC2VPC}"
+            VPCSecurityGroups: 
+              - "sg-07ce994535f7be639"
+            MaxAllocatedStorage: 1000
+            DBParameterGroupName: "default.mysql8.0"
+            OptionGroupName: "default:mysql-8-0"
+            CACertificateIdentifier: "rds-ca-rsa2048-g1"
+
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "10.0.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "commit-project-vpc"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet2.AvailabilityZone
+            CidrBlock: "10.0.16.0/20"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: !Sub "commit-project-subnet-public2-${EC2Subnet2.AvailabilityZone}"
+
+    EC2Subnet2:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}b"
+            CidrBlock: "10.0.32.0/20"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: !Sub "commit-project-subnet-private1-${EC2Subnet3.AvailabilityZone}"
+
+    EC2Subnet3:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "10.0.0.0/20"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: false
+            Tags: 
+              - 
+                Key: "Name"
+                Value: !Sub "commit-project-subnet-public1-${AWS::Region}a"
+
+    EC2InternetGateway:
+        Type: "AWS::EC2::InternetGateway"
+        Properties:
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "commit-project-igw"
+
+    CodePipelinePipeline:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "openresty-ECR-to-ECS"
+            RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/service-role/AWSCodePipelineServiceRole-${AWS::Region}-openresty-ECR-to-ECS"
+            ArtifactStore: 
+                Location: !Sub "codepipeline-${AWS::Region}-581888077454"
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "ECR"
+                        Version: "1"
+                    Configuration: 
+                        RepositoryName: "commit-fargate-openresty"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: !Ref AWS::Region
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProject
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: !Ref AWS::Region
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: !Ref ECSCluster
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "commit-openresty"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: !Ref AWS::Region
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProject:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "commit-openresty-build"
+            Source: 
+                BuildSpec: !Sub |
+                    version: 0.2
+                    
+                    phases:
+                      build:
+                        commands:
+                           - printf '[{"name":"openresty","imageUri":"${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/commit_fargate_nginx:latest"}]' > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                GitCloneDepth: 1
+                InsecureSsl: false
+                Type: "NO_SOURCE"
+            Artifacts: 
+                Type: "NO_ARTIFACTS"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: false
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/service-role/codebuild-commit-openresty-build-service-role"
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+            Visibility: "PRIVATE"
+
+    EC2VPCEndpoint:
+        Type: "AWS::EC2::VPCEndpoint"
+        Properties:
+            VpcEndpointType: "Gateway"
+            VpcId: !Ref EC2VPC
+            ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+            PolicyDocument: "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\"}]}"
+            PrivateDnsEnabled: false
+
+    EC2Route:
+        Type: "AWS::EC2::Route"
+        Properties:
+            DestinationCidrBlock: "0.0.0.0/0"
+            GatewayId: !Ref EC2InternetGateway
+            RouteTableId: !Ref EC2RouteTable
+
+    EC2RouteTable:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "commit-project-rtb-public"
+
+    EC2RouteTable2:
+        Type: "AWS::EC2::RouteTable"
+        Properties:
+            VpcId: !Ref EC2VPC
+

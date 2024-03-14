@@ -1,0 +1,61 @@
+#kubectl apply -f ./kubernetes-dev.yaml
+#kubectl get svc commit-service
+#kubectl get deployments
+#kubectl describe deployments
+#kubectl get pods
+#kubectl delete -f kubernetes-dev.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commit-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: commit-app
+  template:
+    metadata:
+      labels:
+        app: commit-app
+    spec:
+      containers:
+      - name: python-server
+        image: urizaf/commit-kubernetes-python-server:latest
+        ports:
+        - containerPort: 8000
+        - containerPort: 3306
+      - name: nginx
+        image: urizaf/commit-kubernetes-nginx:latest
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: commit-service
+spec:
+  selector:
+    app: commit-app
+  ports:
+  - name: port-8000
+    protocol: TCP
+    port: 8000
+    targetPort: 8000
+  - name: port-3306
+    protocol: TCP
+    port: 3306
+    targetPort: 3306
+  - name: port-80
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  - name: port-443
+    protocol: TCP
+    port: 443
+    targetPort: 443
+  type: NodePort
+
+

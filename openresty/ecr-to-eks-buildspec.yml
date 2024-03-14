@@ -1,0 +1,28 @@
+#need to add secrets to aws secrets
+version: 0.2
+env:
+  secrets-manager:
+    AWS_ECR_ACCESS_KEY_ID: AWS_ECR_ACCESS_KEY_ID
+    AWS_ECR_SECRET_ACCESS_KEY: AWS_ECR_SECRET_ACCESS_KEY
+  variables:
+    REGION: "eu-central-1"
+    ACCOUNT_ID: "463865334882"
+
+phases:
+  post_build:
+    commands:  
+      # Get AWS Credential       
+      - aws configure set aws_access_key_id $AWS_ECR_ACCESS_KEY_ID
+      - aws configure set aws_secret_access_key $AWS_ECR_SECRET_ACCESS_KEY  
+      # Login to ECR Registry 
+      - echo "Login in to Amazon ECR Registry"
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+
+      # Updating kubectl with your EKS Cluster              
+      - echo "Update Kube Config configuration"      
+      - aws eks update-kubeconfig --region $REGION --name commit-cluster
+
+      # Show time, applying manifests changes using kubectl
+      - echo "kubectl apply"            
+      - kubectl apply -f kubernetes-openresty.yaml
+      - echo "Kubernetes changes applied"           

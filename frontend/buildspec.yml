@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  post_build:
+    commands:
+      - echo Writing image definitions file...
+      - printf '[{"name":"commit_fargate_nginx","imageUri":"463865334882.dkr.ecr.eu-central-1.amazonaws.com/commit_fargate_nginx:latest"}]' > imagedefinitions.json
+artifacts:
+    files: imagedefinitions.json

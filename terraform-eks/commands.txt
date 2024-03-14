@@ -1,0 +1,16 @@
+aws eks update-kubeconfig --region eu-central-1 --name commit-cluster 
+kubectl get pods
+kubectl apply -f ../kubernetes-openresty.yaml
+kubectl get pods -w
+kubectl get services
+
+
+
+kubectl get pods
+kubectl exec -it <pod> -- bash
+apt install telnet -y
+telnet database-1.c70a0kyy8u68.eu-central-1.rds.amazonaws.com 3306
+
+terraform output service_url
+
+wget -qO - icanhazip.com

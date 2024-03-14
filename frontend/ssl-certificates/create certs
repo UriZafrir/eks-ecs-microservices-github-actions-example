@@ -1,0 +1,33 @@
+
+ **Generate Root CA Key and Certificate:**
+   Run the following commands to generate a private key and a self-signed root certificate:
+
+   ```bash
+   openssl genpkey -algorithm RSA -out rootCA.key
+   openssl req -x509 -new -key rootCA.key -out rootCA.crt
+   ```
+
+   Follow the prompts to fill in the required information for the root certificate.
+
+ **Generate Key and Certificate Signing Request (CSR) for Your Server:**
+   Generate a private key and a CSR for the server where you want to install the certificate:
+
+   ```bash
+   openssl genpkey -algorithm RSA -out commit.co.il.key
+   openssl req -new -key commit.co.il.key -out commit.co.il.csr
+   ```
+
+   Again, provide the necessary information when prompted.
+
+ **Sign the CSR with Root CA:**
+   Use the root CA to sign the server's CSR:
+
+   ```bash
+   openssl x509 -req -in commit.co.il.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out commit.co.il.crt -days 365
+   ```
+
+   Adjust the `-days` parameter as needed.
+
+ **Use the Certificates:**
+   Use the generated `server.key` and `server.crt` files in your server configuration.
+

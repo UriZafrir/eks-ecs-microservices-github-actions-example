@@ -1,0 +1,15 @@
+ Error: Error in function call
+│
+│   on .terraform/modules/kubernetes_resources.eks/main.tf line 48, in resource aws_eks_cluster this:
+│   48:     subnet_ids              = coalescelist(var.control_plane_subnet_ids, var.subnet_ids)
+│     ├────────────────
+│     │ while calling coalescelist(vals...)
+│     │ var.control_plane_subnet_ids is empty list of string
+│     │ var.subnet_ids is empty list of string
+│
+│ Call to function "coalescelist" failed: no non-null arguments.
+
+
+why kubernetes provider fails
+why connection from node to rds fails
+no CD in github actions or code pipelines

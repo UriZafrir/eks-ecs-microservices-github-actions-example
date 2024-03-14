@@ -1,0 +1,2 @@
+terraformer plan aws --resources="*" --excludes="identitystore"
+terraformer import aws --resources="*" --excludes="identitystore"

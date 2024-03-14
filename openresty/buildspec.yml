@@ -1,0 +1,6 @@
+phases:
+  build:
+    commands:
+       - printf '[{"name":"commit-openresty","imageUri":"463865334882.dkr.ecr.eu-central-1.amazonaws.com/commit-fargate-openresty:latest"}]' > imagedefinitions.json
+artifacts:
+    files: imagedefinitions.json

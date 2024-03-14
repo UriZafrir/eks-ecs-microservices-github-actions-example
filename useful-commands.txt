@@ -1,0 +1,147 @@
+cd openresty
+docker rm -f $(docker ps -aq); docker rmi -f $(docker images -aq)
+
+docker build -t commit-fargate-openresty . && docker tag commit-fargate-openresty:latest urizaf/commit-fargate-openresty:latest && docker push urizaf/commit-fargate-openresty:latest
+
+docker push urizaf/commit-fargate-openresty:latest
+#docker run -d -p 80:80 -p 443:443 --name commit-fargate-openresty commit-fargate-openresty
+
+
+
+https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
+git filter-repo --invert-paths --path .env
+$ git filter-repo --path Templates/ --invert-paths
+
+
+image definitions
+#https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html
+
+
+
+be inside each directory, then:
+docker build -t nginx-commit .
+#docker images
+docker tag nginx-commit:latest urizaf/nginx-commit:latest
+docker tag commit-docker-nginx:latest urizaf/commit-docker-nginx:latest
+docker tag commit-docker-python-server:latest urizaf/commit-docker-python-server:latest
+
+docker push urizaf/commit-docker-nginx:latest
+docker push urizaf/commit-docker-python-server:latest
+
+
+#for running locally
+#docker run --name nginx-commit -d -p 8080:80 nginx-commit
+
+#with ssl
+docker build -t nginx-commit -f frontend/Dockerfile frontend && docker run -d -p 80:80 -p 443:443 --name nginx-commit nginx-commit
+docker build -t python-commit -f backend/Dockerfile backend && docker run -d -p 8000:8000 -p 3307:3306 --name python-commit python-commit
+
+#docker build -t openresty-commit -f openresty/Dockerfile && docker run -d -p 443:443 --name openresty-commit openresty-commit
+docker run -d -p 443:443 --name urizaf/commit-fargate-openresty urizaf/commit-fargate-openresty
+for openresty:
+cd /Users/urizafrir/general/commit-docker/openresty
+docker rm -f $(docker ps -aq); docker rmi -f $(docker images -aq) \
+&& docker build -t openresty-commit . && docker run -d -p 443:443 --name openresty-commit openresty-commit
+
+docker rm -f $(docker ps -aq) \
+&& docker build -t openresty-commit . && docker run -d -p 80:80 -p 443:443 --name openresty-commit openresty-commit
+docker build -t openresty-commit . && docker run -d -p 80:80 -p 443:443 --name openresty-commit openresty-commit
+
+
+
+# for shell
+docker ps -a
+docker exec -it nginx-commit /bin/bash
+docker exec -it crazy_keller /bin/bash
+
+#remove all containers and images
+DEV
+docker rm -f $(docker ps -aq) && docker rmi -f $(docker images -aq) && docker-compose -f docker-compose.dev.yml up
+PROD
+docker rm -f $(docker ps -aq) && docker rmi -f $(docker images -aq) && docker-compose up
+
+docker rm -f $(docker ps -aq) && docker rmi -f $(docker images -aq)
+docker rm -f $(docker ps -aq); docker rmi -f $(docker images -aq)
+
+remember to input DB variables
+
+
+
+aws ecs register-task-definition --cli-input-json .task-definition.json
+
+aws ecs update-service \
+    --cluster <cluster-name> \
+    --service <service-name> \
+    --task-definition <task-family>:<new-revision>
+
+aws eks create-cluster help
+aws eks create-cluster \
+    --name commit-cluster \
+    --role-arn arn:aws:iam::123456789012:role/eks-cluster-role \
+    --resources-vpc-config file://vpc-config.json \
+    --generate-cli-skeleton
+    --region eu-central-1
+
+
+apply kubernetes.yml:
+aws eks --region eu-central-1 update-kubeconfig --name <cluster-name>
+
+aws ec2 create-security-group --group-name YourSecurityGroupName --description "Your Security Group Description" --vpc-id YourVpcId
+
+
+aws ec2 create-subnet \
+    --vpc-id vpc-ExampleID \
+    --cidr-block 10.0.1.0/24 \
+    --availability-zone us-east-1a
+
+
+aws ec2 create-subnet \
+    --vpc-id vpc-ExampleID \
+    --cidr-block 10.0.1.0/24 \
+    --availability-zone us-east-1a
+
+
+https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html
+aws eks create-cluster \
+    --region eu-central-1 \
+    --name commit-cluster \
+    --role-arn arn:aws:iam::123456789012:role/eks-cluster-role \
+    --resources-vpc-config '{"subnetIds":["subnet-ExampleID1","subnet-ExampleID2"],"securityGroupIds":["sg-NodeGroupSecurityGroup"]}'
+    --launch-type FARGATE
+    --generate-cli-skeleton
+
+aws eks create-fargate-profile \
+    --cluster-name commit-cluster \
+    --fargate-profile-name my-fargate-profile \
+    --pod-execution-role-arn arn:aws:iam::123456789012:role/fargate-execution-role \
+    --subnets subnet-ExampleID1 subnet-ExampleID2 \
+    --selectors namespace=my-namespace
+
+https://www.pulumi.com/ai/answers/gvr81dxHueMgzpXkN6ERf7/deploying-aws-fargate-spot-with-terraform
+
+
+terraform init \
+&& terraform plan
+terraform plan -no-color | grep "will be created"
+terraform create
+
+
+kubectl get pods
+kubectl exec -it openresty-deployment-84d55495bb-qmh2w -- bash
+telnet database-1.c70a0kyy8u68.eu-central-1.rds.amazonaws.com 3306
+
+
+associate security group to autoscaling group?
+this is the security group of the created ec2 instances: 
+eks-cluster-sg-commit-cluster-1196029796
+
+https://dev.to/bensooraj/accessing-amazon-rds-from-aws-eks-2pc3
+need to update routing between two vpcs
+need to create a security group
+
+
+
+
+
+
+

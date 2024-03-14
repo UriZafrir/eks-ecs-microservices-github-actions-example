@@ -1,0 +1,5 @@
+rds_host = "your-rds-host"  
+rds_port = your-port 
+rds_user = "your-user"  
+rds_password = "your-password"
+rds_db = "your-database" 

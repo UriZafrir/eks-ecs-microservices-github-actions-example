@@ -1,0 +1,122 @@
+https://github.com/iann0036/former2
+
+Failed to pull image : rpc error: code = NotFound desc = failed to pull and unpack image : failed to resolve reference : not found
+
+
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Condition": {
+         "ArnLike": {
+            "aws:SourceArn": "arn:aws:eks:region-code:111122223333:fargateprofile/my-cluster/*"
+         }
+      },
+      "Principal": {
+        "Service": "eks-fargate-pods.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+
+
+
+
+
+
+
+https://monadical.com/posts/set-up-ci-workflow.html
+git clone https://github.com/UriZafrir/commit-docker.git
+git remote add origin https://github.com/UriZafrir/commit-docker.git
+
+
+
+
+https://www.docker.com/blog/docker-compose-from-local-to-amazon-ecs/
+https://medium.com/@habibullah.127.0.0.1/containerization-of-python-flask-nginx-in-docker-7c451b3328b7
+https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-22-04
+https://www.docker.com/blog/docker-compose-from-local-to-amazon-ecs/
+https://aws.amazon.com/blogs/containers/deploy-applications-on-amazon-ecs-using-docker-compose/
+https://github.com/aws-actions/amazon-ecs-deploy-task-definition
+https://copyprogramming.com/howto/aws-ecs-docker-nginx-emerg-host-not-found-in-upstream
+
+
+
+
+
+
+#NJS 
+https://nginx.org/en/docs/njs/node_modules.html
+https://github.com/nginx/njs-examples/blob/master/README.rst#running-inside-docker
+debug with njs command
+
+https://github.com/arut/nginx-mysql-module
+https://github.com/nginx/njs-examples
+njs in nginx
+nginx-module-njs
+
+load_module modules/ngx_http_js_module.so;
+
+https://github.com/nginx/njs-examples
+https://nginx.org/en/docs/beginners_guide.html
+https://nginx.org/en/docs/http/ngx_http_js_module.html
+https://www.youtube.com/watch?v=xTDcZNPPzXk&ab_channel=NGINX
+https://www.reddit.com/r/docker/comments/oabga4/run_perl_script_in_nginx_container/
+
+perl requires nginx plus
+ngx_http_perl_module
+
+python
+https://github.com/arut/nginx-python-module
+https://medium.com/swlh/mini-project-deploying-python-application-with-nginx-30f9b25b195
+
+javascript 
+https://github.com/nginx/njs-examples
+njs in nginx
+nginx-module-njs
+https://docs.nginx.com/nginx/admin-guide/dynamic-modules/nginscript/
+Using node modules with njs
+https://nginx.org/en/docs/njs/node_modules.html
+
+load_module modules/ngx_http_js_module.so;
+
+
+In ECS awsvpc mode, each task gets its own network namespace, and containers within the same task can communicate with each other using `localhost`. This means you can refer to other containers in the same task using the container names or service names defined in your Docker Compose file or ECS task definition.
+
+When setting up the `nginx.conf` file for Nginx in ECS awsvpc mode, you should refer to the containers by the names you've given them in your Docker Compose file or ECS task definition. If you've defined a service name in Docker Compose, you can use that service name as the hostname.
+
+Here's a simplified example in a Docker Compose file:
+
+```yaml
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+
+  app:
+    image: myapp
+```
+
+In the `nginx.conf` file, you can refer to the `app` service using its service name:
+
+```nginx
+location / {
+    proxy_pass http://app:8000;  # Assuming your app is running on port 8000
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+```
+
+When you deploy this configuration to ECS in awsvpc mode, the `nginx` container can communicate with the `app` container using the service name `app` as if they were on the same host.
+
+Note: ECS awsvpc mode assigns each task its own network interface, so there is no need to expose ports explicitly in the `docker-compose.yml` file or the ECS task definition when using awsvpc. The ports are implicitly open within the same task.
+
+Adjust the names and ports according to your actual Docker Compose or ECS task definition configuration. The key is to use the names you've defined for your containers or services in the setup.
