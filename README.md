@@ -21,9 +21,9 @@ aws rds start-db-instance --db-instance-identifier database-1
 aws ecs update-service --cluster ecs-cluster-commit --service commit-openressty --desired-count 1
 aws ecs update-service --cluster ecs-cluster-commit --service commit-flask-nginx-gunicorn-v2 --desired-count 1
 
-https://<ip>
+https://< ip >
 
-https://<ip>/query
+https://< ip >/query
 
 kubernetes cluster:
 tf init && tf plan
