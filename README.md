@@ -18,6 +18,7 @@ repo containes:
 
 ## dev environment :
 ```
+(with kubernetes in docker)
 docker rm -f $(docker ps -aq); docker rmi -f $(docker images -aq)
 
 docker-build-and-push-to-docker-hub.sh && kubectl apply -f kubernetes-dev.yaml && kubectl get svc commit-service
