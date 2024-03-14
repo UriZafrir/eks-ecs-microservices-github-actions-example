@@ -2,7 +2,7 @@
 ## Devops Example Project
 repo containes:
 - Two dockerfiles showcasing two ways of implementing an nginx container talking to an RDS databas. one with two containers and one with nginx with lua (tech called openresty)
-- Github actions to push to aws elastic container registry
+- Three Github actions workflows, to push to aws elastic container registry, and to update EKS cluster.
 - Aws code pipelines to push containers to fargate elastic container service
 - Terraform code for deploying an elastic kubernetes cluster on aws and deploy the app. EKS uses a seperate subnet with vpc peering and dns resolution.
 
